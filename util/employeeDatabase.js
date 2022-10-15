@@ -11,16 +11,16 @@ const questions = {
                 `View All Departments`,
                 `View All Roles`,
                 `View All Employees`,
-                `View Employees by Manager`
-                `View Employees by Department`
-                `View Total Utilized Budget of a Department`
+                `View Employees by Manager`,
+                `View Employees by Department`,
+                `View Total Utilized Budget of a Department`,
                 `Add a Department`,
                 `Add a Role`,
                 `Add an Employee`,
                 `Update Employee's Role`,
                 `Update Employee's Manager`,
                 `Delete a Department`,
-                `Delete a Role`
+                `Delete a Role`,
                 `Delete an Employee`,
                 `Exit Application`
             ]
@@ -108,8 +108,63 @@ const questions = {
     ]
 };
 
-function employeePrompt() {
-    console.log("test");
+const employeePrompt = function() {
+    inquirer.prompt(questions.decision)
+        .then(answer => {
+            switch (answer.decision) {
+                case `View All Departments`:
+                    console.log(`View All Departments chosen`);
+                    break;
+                case `View All Roles`:
+                    console.log(`View All Roles selected`);
+                    break;
+                case `View All Employees`:
+                    console.log(`View All Employees selected`);
+                    break;
+                case `View Employees by Manager`:
+                    console.log(`View Employees by Manager selected`);
+                    break;
+                case `View Employees by Department`:
+                    console.log(`View Employees by Department selected`);
+                    break;
+                case `View Total Utilized Budget of a Department`:
+                    console.log(`View Total Utilized Budget of a Department selected`);
+                    break;
+                case `Add a Department`:
+                    console.log(`Add a Department selected`);
+                    break;
+                case `Add a Role`:
+                    console.log(`Add a Role selected`);
+                    break;
+                case `Add an Employee`:
+                    console.log(`Add an Employee selected`);
+                    break;
+                case `Update Employee's Role`:
+                    console.log(`Update Employee's Role selected`);
+                    break;
+                case `Update Employee's Manager`:
+                    console.log(`Update Employee's Manager selected`);
+                    break;
+                case `Delete a Department`:
+                    console.log(`Delete a Department selected`);
+                    break;
+                case `Delete a Role`:
+                    console.log(`Delete a Role selected`);
+                    break;
+                case `Delete an Employee`:
+                    console.log(`Delete an Employee selected`);
+                    break;
+                case `Exit Application`:
+                    console.log(`Exiting application...`);
+                    db.end();
+                    return;
+
+            }
+        })
+        .catch((error) => {
+            console.log(error);
+        });
 }
+
 
 module.exports = employeePrompt;
