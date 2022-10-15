@@ -213,7 +213,8 @@ const addRole = function() {
 
                     // Pushes department_id into params array so role can properly be added with needed table values
                     params.push(departmentId);
-                    let sql = `
+
+                    const sql = `
                     INSERT INTO roles (name, salary, department_id) VALUes (?, ?, ?)
                     `;
 
@@ -235,10 +236,11 @@ const addEmployee =  function() {
             const sql = `SELECT * FROM roles;`;
             const params = [answer.employeeFirstName, answer.employeeLastName];
 
-            // Getting roles from database to populate choices for roles
+            // Gets roles from database to populate choices for roles
             db.query(sql, params, (err, rows) => {
                 if (err) return console.log(err.message);
                 else {
+                    // Creates an array for choices for roles to select from
                     let roles = []
                     rows.forEach(role => { roles.push(role.name) });
 
@@ -258,43 +260,95 @@ const addEmployee =  function() {
                                 };
                             });
                             
+                            // Pushes role_id into params
                             params.push(roleId);
                             
-                            // Getting managers from database to populate choices for managers
+                            // Gets managers from database to populate choices for managers
                             const sql = `SELECT * FROM employees;`;
                             db.query(sql, params, (err, rows) => {
-                                if (err) {
-                                    return console.log(err.message);
-                                }
-                                else {
-                                    let managers = rows.map(({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id}));
-                                    managers.push({ name: `N/A`, value: null})
-                                    inquirer.prompt([
-                                        {
-                                            type: `list`,
-                                            name: `employeeManager`,
-                                            message: `Who is the new employee's manager?`,
-                                            choices: managers 
-                                        }
-                                    ])
-                                    .then(answer => {
-                                        params.push(answer.employeeManager);
-                                        let sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
-    
-                                        db.query(sql, params, (err, rows) => {
-                                            if (err) return console.log(err.message);
-                            
-                                            console.log(`\n`,
-                                            `Employee ${params[0] + ` ` + params[1]} added.`)
-                                            viewEmployees();
-                                        });
+                                if (err) return console.log(err.message);
+                                
+                                // Creates an array for choices for managers to select from
+                                let managers = rows.map(({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id}));
+                                managers.push({ name: `N/A`, value: null})
+                                
+                                inquirer.prompt([
+                                    {
+                                        type: `list`,
+                                        name: `employeeManager`,
+                                        message: `Who is the new employee's manager?`,
+                                        choices: managers 
+                                    }
+                                ])
+                                .then(answer => {
+                                    // Pushes answer for manager_id into params
+                                    params.push(answer.employeeManager);
+                                    const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+
+                                    db.query(sql, params, (err, rows) => {
+                                        if (err) return console.log(err.message);
+                        
+                                        console.log(`\n`,
+                                        `Employee ${params[0] + ` ` + params[1]} added.`)
+                                        viewEmployees();
                                     });
-                                }
+                                });
+                                
                             });
                         });
                 }
             });
         });
+};
+
+const updateEmployeeRole = function() {
+    const sql = `SELECT * FROM employees;`
+    // Gets employees to choose from
+    db.query( sql, (err, rows) => {
+        if (err) return console.log(err.message);
+
+        let employees = rows.map (({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id }));
+
+        inquirer.prompt([
+            {
+                type: `list`,
+                name: `employeeId`,
+                message: `Which employee's role needs to be updated?`,
+                choices: employees
+            }
+        ])
+        .then(answer => {
+            const params = [answer.employeeId];
+            const sql = `SELECT * FROM roles`
+            // Gets roles to choose from
+            db.query(sql, (err, rows) => {
+                if (err) return console.log(err.message);
+                
+                let roles = rows.map(({ id, name}) => ({ name: name, value: id}));
+    
+                inquirer.prompt([
+                    {
+                        type: `list`,
+                        name: `employeeRole`,
+                        message: `What is the employee's new role?`,
+                        choices: roles
+                    }
+                ])
+                .then(answer => {
+                    const sql = `UPDATE employees SET role_id = ${answer.employeeRole} WHERE id = ?`
+                    
+                    db.query(sql, params, (err, rows) => {
+                        if (err) return console.log(err.message);
+        
+                        console.log(`\n`,
+                        `Employee role updated.`)
+                        viewEmployees();
+                    });
+                })
+            });
+        });
+    });
+
 };
 
 // Prompts for user interaction with employeeRoster database
@@ -330,7 +384,7 @@ const employeePrompt = function() {
                     addEmployee();
                     break;
                 case `Update Employee's Role`:
-                    console.log(`Update Employee's Role selected`);
+                    updateEmployeeRole();
                     break;
                 case `Update Employee's Manager`:
                     console.log(`Update Employee's Manager selected`);
