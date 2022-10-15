@@ -1,5 +1,6 @@
 const inquirer = require(`inquirer`);
 const db = require(`../db/connection.js`);
+require(`console.table`);
 
 // Base questions for user priompt that do not require mysql interaction
 const questions = {
@@ -109,19 +110,70 @@ const questions = {
     ]
 };
 
+// MySQL Functions
+const viewDepartments = function() {
+    const sql = `SELECT * FROM departments;`;
+
+    db.query(sql, (err, rows) => {
+        if (err) return console.log(err.message);
+
+        console.table(`\n`, rows, `\n`);
+        employeePrompt();
+    })
+};
+
+const viewRoles = function() {
+    const sql = `
+    SELECT roles.id, roles.name, roles.salary, departments.name AS department FROM roles INNER JOIN departments ON roles.department_id = departments.id;
+    `;
+
+    db.query(sql, (err, rows) => {
+        if (err) return console.log(err.message);
+
+        console.table(`\n`, rows, `\n`);
+        employeePrompt();
+    })
+};
+
+const viewEmployees = function() {
+    const sql = `
+    SELECT A.id,
+    A.first_name,
+    A.last_name,
+    roles.name AS role,
+    roles.salary AS salary,
+    departments.name AS department,
+    CONCAT (B.first_name, " ", B.last_name) AS manager
+    FROM employees A
+    LEFT JOIN roles
+    ON A.role_id = roles.id
+    LEFT JOIN departments
+    ON roles.department_id = departments.id
+    LEFT JOIN employees B
+    ON B.id = A.manager_id;
+    `
+
+    db.query(sql, (err, rows) => {
+        if (err) return console.log(err.message);
+
+        console.table(`\n`, rows, `\n`);
+        employeePrompt();
+    })
+};
+
 // Prompts for user interaction with employeeRoster database
 const employeePrompt = function() {
     inquirer.prompt(questions.decision)
         .then(answer => {
             switch (answer.decision) {
                 case `View All Departments`:
-                    console.log(`View All Departments chosen`);
+                    viewDepartments();
                     break;
                 case `View All Roles`:
-                    console.log(`View All Roles selected`);
+                    viewRoles();
                     break;
                 case `View All Employees`:
-                    console.log(`View All Employees selected`);
+                    viewEmployees();
                     break;
                 case `View Employees by Manager`:
                     console.log(`View Employees by Manager selected`);
