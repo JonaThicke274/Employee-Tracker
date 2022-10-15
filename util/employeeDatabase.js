@@ -229,7 +229,73 @@ const addRole = function() {
         })
 };
 
-const addEmployee = function() {}
+const addEmployee =  function() {
+    inquirer.prompt(questions.addEmployee)
+        .then(answer => {
+            const sql = `SELECT * FROM roles;`;
+            const params = [answer.employeeFirstName, answer.employeeLastName];
+
+            // Getting roles from database to populate choices for roles
+            db.query(sql, params, (err, rows) => {
+                if (err) return console.log(err.message);
+                else {
+                    let roles = []
+                    rows.forEach(role => { roles.push(role.name) });
+
+                    inquirer.prompt([
+                            {
+                                type: `list`,
+                                name: `employeeRole`,
+                                message: `What is your new employee's role?`,
+                                choices: roles
+                            }
+                        ])
+                        .then(answer => {
+                            let roleId;
+                            rows.forEach((role) => {
+                                if (answer.employeeRole === role.name) {
+                                    roleId = role.id;
+                                };
+                            });
+                            
+                            params.push(roleId);
+                            
+                            // Getting managers from database to populate choices for managers
+                            const sql = `SELECT * FROM employees;`;
+                            db.query(sql, params, (err, rows) => {
+                                if (err) {
+                                    return console.log(err.message);
+                                }
+                                else {
+                                    let managers = rows.map(({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id}));
+                                    managers.push({ name: `N/A`, value: null})
+                                    inquirer.prompt([
+                                        {
+                                            type: `list`,
+                                            name: `employeeManager`,
+                                            message: `Who is the new employee's manager?`,
+                                            choices: managers 
+                                        }
+                                    ])
+                                    .then(answer => {
+                                        params.push(answer.employeeManager);
+                                        let sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+    
+                                        db.query(sql, params, (err, rows) => {
+                                            if (err) return console.log(err.message);
+                            
+                                            console.log(`\n`,
+                                            `Employee ${params[0] + ` ` + params[1]} added.`)
+                                            viewEmployees();
+                                        });
+                                    });
+                                }
+                            });
+                        });
+                }
+            });
+        });
+};
 
 // Prompts for user interaction with employeeRoster database
 const employeePrompt = function() {
