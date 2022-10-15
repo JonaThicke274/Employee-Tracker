@@ -1,6 +1,7 @@
 const inquirer = require(`inquirer`);
 const db = require(`../db/connection.js`);
 
+// Base questions for user priompt that do not require mysql interaction
 const questions = {
     decision: [
         {
@@ -108,6 +109,7 @@ const questions = {
     ]
 };
 
+// Prompts for user interaction with employeeRoster database
 const employeePrompt = function() {
     inquirer.prompt(questions.decision)
         .then(answer => {
