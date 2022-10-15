@@ -1,4 +1,5 @@
 const inquirer = require(`inquirer`);
+const { default: RawListPrompt } = require("inquirer/lib/prompts/rawlist");
 const db = require(`../db/connection.js`);
 require(`console.table`);
 
@@ -161,6 +162,75 @@ const viewEmployees = function() {
     })
 };
 
+const addDepartment = function() {
+    inquirer.prompt(questions.addDepartment)
+        .then(answer => {
+            const sql = `INSERT INTO departments (name) VALUES (?)`
+            const params = [answer.department]
+
+            db.query(sql, params, (err, rows) => {
+                if (err) return console.log(err.message);
+
+                console.log(`\n`,
+                `Department ${answer.department} added.`,
+                `\n`)
+                viewDepartments();
+            })
+        })
+};
+
+const addRole = function() {
+    inquirer.prompt(questions.addRole)
+        .then(answer => {
+            const sql = `SELECT * FROM departments;`;
+            const params = [answer.roleName, answer.roleSalary];
+
+            // Gets departments from database to populate choices for which department the new role belongs to
+            db.query(sql, params, (err, rows) => {
+                if (err) return console.log(err.message);
+
+                // Initializes the array of departments then pushes each department from the database
+                let departments = []
+                rows.forEach((department) => {
+                    departments.push(department.name)
+                });
+
+                inquirer.prompt([ 
+                    {
+                        type: `list`,
+                        name: `roleDepartment`,
+                        message: `What is the new role's department?`,
+                        choices: departments
+                    }
+                ])
+                .then(answer => {
+                    let departmentId;
+                    rows.forEach(department => {
+                        if (answer.roleDepartment === department.name) {
+                            departmentId = department.id
+                        }
+                    });
+
+                    // Pushes department_id into params array so role can properly be added with needed table values
+                    params.push(departmentId);
+                    let sql = `
+                    INSERT INTO roles (name, salary, department_id) VALUes (?, ?, ?)
+                    `;
+
+                    db.query(sql, params, (err, rows) => {
+                        if (err) return console.log(err.message);
+        
+                        console.log(`\n`,
+                        `Role ${params[0]} added.`)
+                        viewRoles();
+                    })
+                })
+            })
+        })
+};
+
+const addEmployee = function() {}
+
 // Prompts for user interaction with employeeRoster database
 const employeePrompt = function() {
     inquirer.prompt(questions.decision)
@@ -185,13 +255,13 @@ const employeePrompt = function() {
                     console.log(`View Total Utilized Budget of a Department selected`);
                     break;
                 case `Add a Department`:
-                    console.log(`Add a Department selected`);
+                    addDepartment();
                     break;
                 case `Add a Role`:
-                    console.log(`Add a Role selected`);
+                    addRole();
                     break;
                 case `Add an Employee`:
-                    console.log(`Add an Employee selected`);
+                    addEmployee();
                     break;
                 case `Update Employee's Role`:
                     console.log(`Update Employee's Role selected`);
