@@ -116,8 +116,10 @@ const viewDepartments = function() {
     const sql = `SELECT * FROM departments;`;
 
     db.query(sql, (err, rows) => {
-        if (err) return console.log(err.message);
-
+        if (err) {
+            console.log(err.message, `\n`, `Exiting application...`);
+            return db.end();
+        }
         console.table(`\n`, rows, `\n`);
         employeePrompt();
     })
@@ -129,7 +131,10 @@ const viewRoles = function() {
     `;
 
     db.query(sql, (err, rows) => {
-        if (err) return console.log(err.message);
+        if (err) {
+            console.log(err.message, `\n`, `Exiting application...`);
+            return db.end();
+        };
 
         console.table(`\n`, rows, `\n`);
         employeePrompt();
@@ -155,7 +160,10 @@ const viewEmployees = function() {
     `
 
     db.query(sql, (err, rows) => {
-        if (err) return console.log(err.message);
+        if (err) {
+            console.log(err.message, `\n`, `Exiting application...`);
+            return db.end();
+        }
 
         console.table(`\n`, rows, `\n`);
         employeePrompt();
@@ -166,7 +174,10 @@ const viewEmployeesByManager = function() {
     const sql = `SELECT * FROM employees;`;
     // Gets employees to choose from
     db.query(sql, (err, rows) => {
-        if (err) return console.log(err.message);
+        if (err) {
+            console.log(err.message, `\n`, `Exiting application...`);
+            return db.end();
+        }
 
         // Creates object of employee's to choose from
         let employees = rows.map (({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id }));
@@ -200,8 +211,10 @@ const viewEmployeesByManager = function() {
             const params = [answer.employeeId];
 
             db.query(sql, params, (err, rows) => {
-                if (err) return console.log(err.message);
-
+                if (err) {
+                    console.log(err.message, `\n`, `Exiting application...`);
+                    return db.end();
+                }
                 console.table(`\n`, rows, `\n`);
                 employeePrompt();
             })
@@ -217,7 +230,10 @@ const addDepartment = function() {
             const params = [answer.department]
 
             db.query(sql, params, (err, rows) => {
-                if (err) return console.log(err.message);
+                if (err) {
+                    console.log(err.message, `\n`, `Exiting application...`);
+                    return db.end();
+                }
 
                 console.log(`\n`,
                 `Department ${answer.department} added.`,
@@ -235,7 +251,10 @@ const addRole = function() {
 
             // Gets departments from database to populate choices for which department the new role belongs to
             db.query(sql, params, (err, rows) => {
-                if (err) return console.log(err.message);
+                if (err) {
+                    console.log(err.message, `\n`, `Exiting application...`);
+                    return db.end();
+                }
 
                 // Initializes the array of departments then pushes each department from the database
                 let departments = []
@@ -267,7 +286,10 @@ const addRole = function() {
                     `;
 
                     db.query(sql, params, (err, rows) => {
-                        if (err) return console.log(err.message);
+                        if (err) {
+                            console.log(err.message, `\n`, `Exiting application...`);
+                            return db.end();
+                        }
         
                         console.log(`\n`,
                         `Role ${params[0]} added.`)
@@ -286,65 +308,74 @@ const addEmployee =  function() {
 
             // Gets roles from database to populate choices for roles
             db.query(sql, params, (err, rows) => {
-                if (err) return console.log(err.message);
-                else {
-                    // Creates an array for choices for roles to select from
-                    let roles = []
-                    rows.forEach(role => { roles.push(role.name) });
-
-                    inquirer.prompt([
-                            {
-                                type: `list`,
-                                name: `employeeRole`,
-                                message: `What is your new employee's role?`,
-                                choices: roles
-                            }
-                        ])
-                        .then(answer => {
-                            let roleId;
-                            rows.forEach((role) => {
-                                if (answer.employeeRole === role.name) {
-                                    roleId = role.id;
-                                };
-                            });
-                            
-                            // Pushes role_id into params
-                            params.push(roleId);
-                            
-                            // Gets managers from database to populate choices for managers
-                            const sql = `SELECT * FROM employees;`;
-                            db.query(sql, params, (err, rows) => {
-                                if (err) return console.log(err.message);
-                                
-                                // Creates an array for choices for managers to select from
-                                let managers = rows.map(({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id}));
-                                managers.push({ name: `N/A`, value: null})
-                                
-                                inquirer.prompt([
-                                    {
-                                        type: `list`,
-                                        name: `employeeManager`,
-                                        message: `Who is the new employee's manager?`,
-                                        choices: managers 
-                                    }
-                                ])
-                                .then(answer => {
-                                    // Pushes answer for manager_id into params
-                                    params.push(answer.employeeManager);
-                                    const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
-
-                                    db.query(sql, params, (err, rows) => {
-                                        if (err) return console.log(err.message);
-                        
-                                        console.log(`\n`,
-                                        `Employee ${params[0] + ` ` + params[1]} added.`)
-                                        viewEmployees();
-                                    });
-                                });
-                                
-                            });
-                        });
+                if (err) {
+                    console.log(err.message, `\n`, `Exiting application...`);
+                    return db.end();
                 }
+                
+                // Creates an array for choices for roles to select from
+                let roles = []
+                rows.forEach(role => { roles.push(role.name) });
+
+                inquirer.prompt([
+                        {
+                            type: `list`,
+                            name: `employeeRole`,
+                            message: `What is your new employee's role?`,
+                            choices: roles
+                        }
+                    ])
+                    .then(answer => {
+                        let roleId;
+                        rows.forEach((role) => {
+                            if (answer.employeeRole === role.name) {
+                                roleId = role.id;
+                            };
+                        });
+                        
+                        // Pushes role_id into params
+                        params.push(roleId);
+                        
+                        // Gets managers from database to populate choices for managers
+                        const sql = `SELECT * FROM employees;`;
+                        db.query(sql, params, (err, rows) => {
+                            if (err) {
+                                console.log(err.message, `\n`, `Exiting application...`);
+                                return db.end();
+                            }
+                            
+                            // Creates an array for choices for managers to select from
+                            let managers = rows.map(({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id}));
+                            managers.push({ name: `N/A`, value: null})
+                            
+                            inquirer.prompt([
+                                {
+                                    type: `list`,
+                                    name: `employeeManager`,
+                                    message: `Who is the new employee's manager?`,
+                                    choices: managers 
+                                }
+                            ])
+                            .then(answer => {
+                                // Pushes answer for manager_id into params
+                                params.push(answer.employeeManager);
+                                const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+
+                                db.query(sql, params, (err, rows) => {
+                                    if (err) {
+                                        console.log(err.message, `\n`, `Exiting application...`);
+                                        return db.end();
+                                    }
+                    
+                                    console.log(`\n`,
+                                    `Employee ${params[0] + ` ` + params[1]} added.`)
+                                    viewEmployees();
+                                });
+                            });
+                            
+                        });
+                    });
+                
             });
         });
 };
@@ -353,7 +384,10 @@ const updateEmployeeRole = function() {
     const sql = `SELECT * FROM employees;`;
     // Gets employees to choose from
     db.query(sql, (err, rows) => {
-        if (err) return console.log(err.message);
+        if (err) {
+            console.log(err.message, `\n`, `Exiting application...`);
+            return db.end();
+        }
 
         // Creates object of employee's to choose from
         let employees = rows.map (({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id }));
@@ -371,7 +405,10 @@ const updateEmployeeRole = function() {
             const sql = `SELECT * FROM roles`
             // Gets roles to choose from
             db.query(sql, (err, rows) => {
-                if (err) return console.log(err.message);
+                if (err) {
+                    console.log(err.message, `\n`, `Exiting application...`);
+                    return db.end();
+                }
                 
                 // Creates an array for choices for managers to select from
                 let roles = rows.map(({ id, name}) => ({ name: name, value: id}));
@@ -388,7 +425,10 @@ const updateEmployeeRole = function() {
                     const sql = `UPDATE employees SET role_id = ${answer.employeeRole} WHERE id = ?`
                     
                     db.query(sql, params, (err, rows) => {
-                        if (err) return console.log(err.message);
+                        if (err) {
+                            console.log(err.message, `\n`, `Exiting application...`);
+                            return db.end();
+                        }
         
                         console.log(`\n`,
                         `Employee role updated.`)
