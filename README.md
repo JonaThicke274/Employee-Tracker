@@ -12,9 +12,13 @@ Generate an employee database that contains employees, their roles/job-titles, a
 * ES6
 
 ## Instructions to Use:
-* 
+* Clone this repository to your desired directory
+* Using your terminal, run `npm install` to install needed dependencies
+* Following install of dependencies, run the application with `npm start` and interact with your employee database as you see fit!
 
 ## Demonstration
+
+View a [demonstration video]() of how to use the application!
 
 ## Contributions/Credits
 Made by Jonathan Lipata Arevalo
