@@ -453,7 +453,7 @@ const updateEmployeeRole = function() {
         ])
         .then(answer => {
             const params = [answer.employeeId];
-            const sql = `SELECT * FROM roles`
+            const sql = `SELECT * FROM roles;`;
             // Gets roles to choose from
             db.query(sql, (err, rows) => {
                 if (err) {
@@ -482,14 +482,75 @@ const updateEmployeeRole = function() {
                         }
         
                         console.log(`\n`,
-                        `Employee role updated.`)
+                        `Employee role updated.`);
                         viewEmployees();
                     });
-                })
+                });
             });
         });
     });
 
+};
+
+const updateEmployeeManager = function() {
+    const sql = `SELECT * FROM employees;`;
+    // Gets employees to choose from
+    db.query(sql, (err, rows) => {
+        if (err) {
+            console.log(err.message, `\n`, `Exiting application...`);
+            return db.end();
+        }
+
+        // Creates object of employee's to choose from
+        let employees = rows.map (({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id }));
+
+        inquirer.prompt([
+            {
+                type: `list`,
+                name: `employeeId`,
+                message: `Which employee's manager needs to be updated?`,
+                choices: employees
+            }
+        ])
+        .then(answer => {
+            const params = [answer.employeeId];
+            const sql = `SELECT * FROM employees;`;
+            // Get employees to choose from
+            db.query(sql, (err, rows) => {
+                if (err) {
+                    console.log(err.message, `\n`, `Exiting application...`);
+                    return db.end();
+                }
+
+                // Creates an array for choices for managers to select from
+                let managers = rows.map(({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id}));
+                managers.push({ name: `N/A`, value: null})
+
+                inquirer.prompt([
+                    {
+                        type: `list`,
+                        name: `employeeManager`,
+                        message: `Who is the employee's new manager?`,
+                        choices: managers 
+                    }
+                ])
+                .then(answer => {
+                    const sql = `UPDATE employees SET manager_id = ${answer.employeeManager} WHERE id = ?`
+                    
+                    db.query(sql, params, (err, rows) => {
+                        if (err) {
+                            console.log(err.message, `\n`, `Exiting application...`);
+                            return db.end();
+                        }
+
+                        console.log( `\n`,
+                        `Employee manager updated.`);
+                        viewEmployees();
+                    });
+                });
+            });
+        });
+    });
 };
 
 // Prompts for user interaction with employeeRoster database
@@ -528,7 +589,7 @@ const employeePrompt = function() {
                     updateEmployeeRole();
                     break;
                 case `Update Employee's Manager`:
-                    console.log(`Update Employee's Manager selected`);
+                    updateEmployeeManager();
                     break;
                 case `Delete a Department`:
                     console.log(`Delete a Department selected`);
