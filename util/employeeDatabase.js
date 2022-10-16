@@ -217,10 +217,61 @@ const viewEmployeesByManager = function() {
                 }
                 console.table(`\n`, rows, `\n`);
                 employeePrompt();
-            })
+            });
+        });
+    });
+};
+
+const viewEmployeesByDepartment = function() {
+    const sql = `SELECT * FROM departments;`;
+    // Gets employees to choose from
+    db.query(sql, (err, rows) => {
+        if (err) {
+            console.log(err.message, `\n`, `Exiting application...`);
+            return db.end();
+        }
+
+        // Creates object of departments to choose from
+        let departments = rows.map (({ id, name }) => ({ name: name, value: id }));
+
+        inquirer.prompt([
+            {
+                type: `list`,
+                name: `departmentId`,
+                message: `Which department's employee's would you like to see?`,
+                choices: departments
+            }
+        ])
+        .then(answer => {
+            const sql = `
+            SELECT A.id,
+            A.first_name,
+            A.last_name,
+            roles.name AS role,
+            roles.salary AS salary,
+            departments.name AS department,
+            CONCAT (B.first_name, " ", B.last_name) AS manager
+            FROM employees A
+            LEFT JOIN roles
+            ON A.role_id = roles.id
+            LEFT JOIN departments
+            ON roles.department_id = departments.id
+            LEFT JOIN employees B
+            ON B.id = A.manager_id
+            WHERE departments.id = ?;
+            `
+            const params = [answer.departmentId];
+
+            db.query(sql, params, (err, rows) => {
+                if (err) {
+                    console.log(err.message, `\n`, `Exiting application...`);
+                    return db.end();
+                }
+                console.table(`\n`, rows, `\n`);
+                employeePrompt();
+            });
         })
     })
-
 };
 
 const addDepartment = function() {
@@ -459,7 +510,7 @@ const employeePrompt = function() {
                     viewEmployeesByManager();
                     break;
                 case `View Employees by Department`:
-                    console.log(`View Employees by Department selected`);
+                    viewEmployeesByDepartment();
                     break;
                 case `View Total Utilized Budget of a Department`:
                     console.log(`View Total Utilized Budget of a Department selected`);
@@ -498,7 +549,7 @@ const employeePrompt = function() {
         .catch((error) => {
             console.log(error);
         });
-}
+};
 
 
 module.exports = employeePrompt;
