@@ -162,6 +162,54 @@ const viewEmployees = function() {
     })
 };
 
+const viewEmployeesByManager = function() {
+    const sql = `SELECT * FROM employees;`;
+    // Gets employees to choose from
+    db.query(sql, (err, rows) => {
+        if (err) return console.log(err.message);
+
+        // Creates object of employee's to choose from
+        let employees = rows.map (({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id }));
+
+        inquirer.prompt([
+            {
+                type: `list`,
+                name: `employeeId`,
+                message: `Which manager's employee's would you like to see?`,
+                choices: employees
+            }
+        ])
+        .then(answer => {
+            const sql = `
+            SELECT A.id,
+            A.first_name,
+            A.last_name,
+            roles.name AS role,
+            roles.salary AS salary,
+            departments.name AS department,
+            CONCAT (B.first_name, " ", B.last_name) AS manager
+            FROM employees A
+            LEFT JOIN roles
+            ON A.role_id = roles.id
+            LEFT JOIN departments
+            ON roles.department_id = departments.id
+            LEFT JOIN employees B
+            ON B.id = A.manager_id
+            WHERE A.manager_id = ?;
+            `
+            const params = [answer.employeeId];
+
+            db.query(sql, params, (err, rows) => {
+                if (err) return console.log(err.message);
+
+                console.table(`\n`, rows, `\n`);
+                employeePrompt();
+            })
+        })
+    })
+
+};
+
 const addDepartment = function() {
     inquirer.prompt(questions.addDepartment)
         .then(answer => {
@@ -302,11 +350,12 @@ const addEmployee =  function() {
 };
 
 const updateEmployeeRole = function() {
-    const sql = `SELECT * FROM employees;`
+    const sql = `SELECT * FROM employees;`;
     // Gets employees to choose from
-    db.query( sql, (err, rows) => {
+    db.query(sql, (err, rows) => {
         if (err) return console.log(err.message);
 
+        // Creates object of employee's to choose from
         let employees = rows.map (({ id, first_name, last_name }) => ({ name: first_name + ` ` + last_name, value: id }));
 
         inquirer.prompt([
@@ -324,6 +373,7 @@ const updateEmployeeRole = function() {
             db.query(sql, (err, rows) => {
                 if (err) return console.log(err.message);
                 
+                // Creates an array for choices for managers to select from
                 let roles = rows.map(({ id, name}) => ({ name: name, value: id}));
     
                 inquirer.prompt([
@@ -366,7 +416,7 @@ const employeePrompt = function() {
                     viewEmployees();
                     break;
                 case `View Employees by Manager`:
-                    console.log(`View Employees by Manager selected`);
+                    viewEmployeesByManager();
                     break;
                 case `View Employees by Department`:
                     console.log(`View Employees by Department selected`);
