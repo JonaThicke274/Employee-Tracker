@@ -1,5 +1,4 @@
 const inquirer = require(`inquirer`);
-const { default: RawListPrompt } = require("inquirer/lib/prompts/rawlist");
 const db = require(`../db/connection.js`);
 require(`console.table`);
 
